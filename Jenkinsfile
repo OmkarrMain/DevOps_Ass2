@@ -3,32 +3,54 @@ pipeline {
 
     stages {
 
-        stage('Check Docker') {
+        stage('Checkout') {
             steps {
-                bat 'docker --version'
+                checkout scm
             }
         }
 
-        stage('Check WSL') {
+        stage('Build Docker Image') {
             steps {
-                bat 'wsl ansible --version'
+                bat 'docker build -t omkarr7/devops-app:latest .'
             }
         }
 
-        stage('Check WSL Docker') {
+        stage('Login and Push to Docker Hub') {
             steps {
-                bat 'wsl docker --version'
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+                    bat '''
+                        docker login -u %DOCKER_USER% -p %DOCKER_PASS%
+                        docker push omkarr7/devops-app:latest
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy using Ansible') {
+            steps {
+                bat '''
+                    wsl ansible-playbook ^
+                    -i /mnt/c/Mithibai/Practicales/SEM_3/DevOps/Assignment_2/inventory.ini ^
+                    /mnt/c/Mithibai/Practicales/SEM_3/DevOps/Assignment_2/deploy.yml
+                '''
             }
         }
     }
 
     post {
+
         success {
-            echo 'Jenkins can access Docker and WSL successfully!'
+            echo 'Application deployed successfully!'
         }
 
         failure {
-            echo 'Jenkins environment check failed!'
+            echo 'Deployment failed!'
         }
     }
 }
