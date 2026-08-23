@@ -1,0 +1,23 @@
+---
+- name: Deploy Docker Application
+  hosts: webserver
+  become: true
+
+  tasks:
+    - name: Pull latest Docker image
+      command: docker pull omkarr7/devops-app:latest
+
+    - name: Stop existing application container
+      command: docker stop devops-app
+      ignore_errors: true
+
+    - name: Remove existing application container
+      command: docker rm devops-app
+      ignore_errors: true
+
+    - name: Start application container
+      command: >
+        docker run -d
+        --name devops-app
+        -p 80:80
+        omkarr7/devops-app:latest
