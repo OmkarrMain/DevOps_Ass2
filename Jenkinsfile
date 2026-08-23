@@ -3,42 +3,32 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
+        stage('Check Docker') {
             steps {
-                checkout scm
+                bat 'docker --version'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Check WSL') {
             steps {
-                sh 'docker build -t omkarr7/devops-app:latest .'
+                bat 'wsl ansible --version'
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Check WSL Docker') {
             steps {
-                sh 'docker push omkarr7/devops-app:latest'
-            }
-        }
-
-        stage('Deploy using Ansible') {
-            steps {
-                sh '''
-                    ansible-playbook \
-                    -i inventory.ini \
-                    deploy.yml
-                '''
+                bat 'wsl docker --version'
             }
         }
     }
 
     post {
         success {
-            echo 'Application deployed successfully!'
+            echo 'Jenkins can access Docker and WSL successfully!'
         }
 
         failure {
-            echo 'Deployment failed!'
+            echo 'Jenkins environment check failed!'
         }
     }
 }
